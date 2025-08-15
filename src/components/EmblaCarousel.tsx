@@ -34,10 +34,12 @@ const EmblaCarousel: React.FC = () => {
       <div className="embla__viewport overflow-hidden rounded-xl shadow-lg relative" ref={emblaRef}>
         <div className="embla__container flex">
           {luxurySlides.map((slide, idx) => (
-            <div className="embla__slide min-w-0 flex-shrink-0 w-full flex flex-col items-center" key={idx}>
-              <Image src={slide.image} alt={slide.title} width={320} height={320} className="rounded-xl mb-4" />
-              <div className="text-lg font-semibold text-black">{slide.title}</div>
-              <div className="text-gray-700">{slide.desc}</div>
+            <div className="embla__slide min-w-0 flex-shrink-0 w-full flex flex-col items-center px-4" key={idx}>
+              <div className="w-full max-w-xs sm:max-w-sm aspect-square rounded-xl overflow-hidden mb-4">
+                <Image src={slide.image} alt={slide.title} width={720} height={720} className="w-full h-full object-cover" />
+              </div>
+              <div className={`${slide.title === 'FRUIROSA' ? 'text-2xl sm:text-3xl font-extrabold' : 'text-lg font-semibold'} text-black text-center`}>{slide.title}</div>
+              <div className="text-gray-700 text-center px-2">{slide.desc}</div>
             </div>
           ))}
         </div>

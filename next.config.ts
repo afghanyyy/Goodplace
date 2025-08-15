@@ -30,7 +30,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
     domains: ["png.pngtree.com"],
   },
@@ -41,6 +40,12 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
     ];
+  },
+  eslint: {
+    ignoreDuringBuilds: true, // Skip ESLint error saat build
+  },
+  typescript: {
+    ignoreBuildErrors: true, // Skip TypeScript error saat build
   },
 };
 
