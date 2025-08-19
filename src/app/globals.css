@@ -1,5 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -27,3 +28,114 @@ h1, h2, h3, .luxury-serif {
   font-family: 'Playfair Display', serif;
   font-style: italic;
 }
+
+/* Handwritten style for small product type labels */
+.handwritten {
+  font-family: 'Patrick Hand', cursive;
+  font-weight: 400;
+}
+
+/* Luxurious "NEW" badge styles */
+.badge-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #fffaf2 0%, #fff6e8 40%, #f6e0b8 100%);
+  color: #bfa16a; /* golden accent */
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  box-shadow: 0 6px 22px rgba(191,161,106,0.12), inset 0 -1px 0 rgba(255,255,255,0.6);
+  border: 1px solid rgba(191,161,106,0.18);
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+.badge-new svg { flex: none; }
+
+/* Shiny sweep */
+.badge-new::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -60%;
+  width: 220%;
+  height: 220%;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+  transform: rotate(25deg) translateX(-100%);
+  transition: transform 0.9s cubic-bezier(.2,.8,.2,1);
+  pointer-events: none;
+}
+.badge-new:hover::after,
+.badge-new[data-animate='true']::after {
+  transform: rotate(25deg) translateX(100%);
+}
+
+/* Subtle pulse for richness */
+@keyframes badge-pulse {
+  0% { box-shadow: 0 6px 18px rgba(191,161,106,0.10); }
+  50% { box-shadow: 0 10px 28px rgba(191,161,106,0.16); }
+  100% { box-shadow: 0 6px 18px rgba(191,161,106,0.10); }
+}
+.badge-new { animation: badge-pulse 3.6s ease-in-out infinite; }
+
+/* Small responsive tweak */
+@media (min-width: 640px) {
+  .badge-new { font-size: 0.78rem; padding: 0.34rem 0.9rem; }
+}
+
+/* Card & media micro-interactions */
+.product-card {
+  perspective: 1100px; /* improved 3D feel for tilt */
+  will-change: transform;
+}
+.card-media {
+  transform-origin: center center;
+  transition: transform 400ms cubic-bezier(.2,.9,.3,1), box-shadow 300ms ease;
+}
+.product-card:focus-within,
+.product-card:focus {
+  outline: none;
+}
+.product-card:focus-visible {
+  box-shadow: 0 8px 40px rgba(191,161,106,0.18);
+  border-radius: 1rem;
+}
+.product-card:hover .card-media {
+  transform: translateZ(12px) scale(1.02);
+}
+
+/* Tooltip for badge-new (accessible, supports data-tooltip attr) */
+.badge-new[data-tooltip] {
+  position: relative;
+}
+.badge-new[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: rgba(20,20,20,0.95);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.28);
+  z-index: 40;
+}
+.badge-new[data-tooltip]:hover::before,
+.badge-new[data-tooltip]:focus::before,
+.badge-new[data-tooltip]:focus-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Press feedback for badge */
+.badge-new:active { transform: translateY(1px) scale(0.995); }
+

@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 
 type DotButtonProps = {
@@ -28,7 +29,15 @@ export const DotButton: React.FC<DotButtonProps> = ({ onClick, className }) => {
   );
 };
 
-export function useDotButton(emblaApi: any) {
+type EmblaApi = {
+  scrollSnapList: () => number[];
+  selectedScrollSnap: () => number;
+  on: (event: string, callback: () => void) => void;
+  off: (event: string, callback: () => void) => void;
+  scrollTo: (index: number) => void;
+};
+
+export function useDotButton(emblaApi: EmblaApi | null) {
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const [scrollSnaps, setScrollSnaps] = React.useState<number[]>([]);
 
