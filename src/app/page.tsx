@@ -6,7 +6,7 @@ import SwiperCore from 'swiper';
 import "swiper/css";
 import "swiper/css/mousewheel";
 import "swiper/css/pagination";
-import { Mousewheel, Pagination, Autoplay } from "swiper/modules";
+import { Pagination, Autoplay } from "swiper/modules";
 import { motion } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import Modal from "react-modal";
@@ -14,12 +14,17 @@ import { AnimatePresence, motion as m } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 // ...existing code...
 import EmblaCarousel from "@/components/EmblaCarousel";
+import ChatBot from "@/components/ChatBot";
+import ScrollToTop from "@/components/ScrollToTop";
+import SmartSearch from "@/components/SmartSearch";
+import MobileSmartSearch from "@/components/MobileSmartSearch";
 // import { sub } from "framer-motion/client";
 
+// Convert array to be compatible with both components
 const products = [
 	{
 		name: "FRUIROSA PERFUME Eau De Parfum",
-		images: ["/catalog2.png", "/catalog1.png"],
+		images: ["/parfum2.png", "/catalog1.png"],
 		// price: "$325",
 		desc: " Parfum wanita floral fruity yang ceria dan ringan. Aroma nanas dan markisa yang tropis di awal, bunga peony dan persik di tengah, lalu musk dan amber di dasar. Sempurna untuk hari-hari cerah atau\u00a0liburan.",
         
@@ -276,21 +281,22 @@ export default function Home() {
 		e.currentTarget.style.transform = '';
 	}
 
-  // Accordion state for footer
-  const [footerAccordion, setFooterAccordion] = useState({
-	kontak: false,
-	tautan: false,
-  });
+	// Accordion state for footer
+	const [footerAccordion, setFooterAccordion] = useState({
+		kontak: false,
+		tautan: false,
+		marketplace: false,
+	});
 
-  const toggleAccordion = (key: 'kontak' | 'tautan') => {
-	setFooterAccordion((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+	const toggleAccordion = (key: 'kontak' | 'tautan' | 'marketplace') => {
+		setFooterAccordion((prev) => ({ ...prev, [key]: !prev[key] }));
+	};
 
   // Pagination state for Koleksi Parfume
 	const parfumRows = [
 		[products[0], products[1], products[2]],
 		[
-			{ name: "Amyris Femme", images: ["/catalog2.png", "/catalog1.png"], price: "$295", desc: "Aroma floral lembut dan feminin." },
+			{ name: "Amyris Femme", images: ["/catalog2.png", "/catalog1.png"], price: "$295", desc: "Parfum wanita floral fruity yang ceria dan ringan. Aroma nanas dan markisa yang tropis di awal, bunga peony dan persik di tengah, lalu musk dan amber di dasar. Sempurna untuk hari-hari cerah atau\u00a0liburan.." },
 			{ name: "Gentle Fluidity Gold", images: ["/catalog2.png", "/catalog1.png"], price: "$310", desc: "Wangi musky vanilla yang elegan." },
 			{ name: "L'Homme À la rose", images: ["/catalog2.png", "/catalog1.png"], price: "$280", desc: "Maskulin segar dengan sentuhan rose." },
 		],
@@ -397,7 +403,7 @@ useEffect(() => {
 						onClick={() => {
 							localStorage.setItem('gp_cookie_consent', 'declined');
 							setShowCookie(false);
-							toast('Cookies declined', { icon: '🚫' });
+							// toast('Cookies declined', { icon: '🚫' });
 						}}
 						aria-label="Decline Cookies"
 					>
@@ -473,52 +479,64 @@ useEffect(() => {
 					   className="object-contain h-35 w-35"
 				   />
 			   </motion.div>
-				{/* Responsive nav: hamburger for mobile */}
-		<div className="block sm:hidden absolute left-4 top-1/2 -translate-y-1/2 z-30">
-			<button
-				onClick={() => setShowNav(!showNav)}
-				aria-label={showNav ? "Tutup menu" : "Buka menu"}
-				className="text-black focus:outline-none relative w-10 h-10 flex items-center justify-center"
-			>
-				<motion.span
-					initial={false}
-					animate={showNav ? "open" : "closed"}
-					variants={{}}
-					className="block w-7 h-7 relative"
-				>
-					{/* Bar 1 */}
-					<motion.span
-						variants={{
-							closed: { rotate: 0, y: 0, background: '#222' },
-							open: { rotate: 45, y: 10, background: '#bfa16a' },
-						}}
-						transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-						className="absolute left-0 top-2 w-7 h-1 rounded bg-black block"
-						style={{ originX: 0 }}
-					/>
-					{/* Bar 2 */}
-					<motion.span
-						variants={{
-							closed: { opacity: 1, background: '#222' },
-							open: { opacity: 0, background: '#bfa16a' },
-						}}
-						transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-						className="absolute left-0 top-5 w-7 h-1 rounded bg-black block"
-					/>
-					{/* Bar 3 */}
-					<motion.span
-						variants={{
-							closed: { rotate: 0, y: 0, background: '#222' },
-							open: { rotate: -45, y: -10, background: '#bfa16a' },
-						}}
-						transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-						className="absolute left-0 top-8 w-7 h-1 rounded bg-black block"
-						style={{ originX: 0 }}
-					/>
-				</motion.span>
-			</button>
-		</div>
-		 			<ul className={`flex-col sm:flex-row flex gap-4 sm:gap-8 text-sm font-medium bg-white sm:bg-transparent absolute sm:static left-0 right-0 top-16 sm:top-auto shadow-md sm:shadow-none transition-all duration-300 z-20 ${showNav ? 'flex' : 'hidden sm:flex'}`}>
+
+               {/* Smart Search */}
+               <motion.div
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   transition={{ duration: 0.7, delay: 0.2 }}
+                   className="hidden md:block flex-1 max-w-xl mx-8"
+               >
+                   <SmartSearch openProduct={openProduct} products={parfumRows.flat()} />
+               </motion.div>
+				{/* Responsive nav: modern hamburger + drawer for mobile */}
+				<div className="block sm:hidden absolute left-4 top-1/2 -translate-y-1/2 z-40">
+					<button
+						onClick={() => setShowNav(!showNav)}
+						aria-label={showNav ? "Tutup menu" : "Buka menu"}
+						className="relative w-11 h-11 flex items-center justify-center rounded-full border border-transparent hover:border-[#bfa16a] bg-white/95 shadow-lg focus:outline-none transition-all duration-250"
+					>
+						{/* Elegant animated hamburger lines */}
+						<motion.span initial={false} animate={showNav ? { rotate: 90 } : { rotate: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26 }} className="block w-6 h-6 relative">
+							<motion.span animate={showNav ? { y: 6, rotate: 45, background: '#bfa16a' } : { y: 0, rotate: 0, background: '#222' }} transition={{ duration: 0.28 }} className="absolute left-0 top-0 w-6 h-[2px] rounded-full bg-black" />
+							<motion.span animate={showNav ? { opacity: 0 } : { opacity: 1 }} transition={{ duration: 0.2 }} className="absolute left-0 top-2 w-6 h-[2px] rounded-full bg-black" />
+							<motion.span animate={showNav ? { y: -6, rotate: -45, background: '#bfa16a' } : { y: 4, rotate: 0, background: '#222' }} transition={{ duration: 0.28 }} className="absolute left-0 top-4 w-6 h-[2px] rounded-full bg-black" />
+						</motion.span>
+					</button>
+				</div>
+
+				{/* Mobile drawer overlay */}
+				{showNav && (
+					<div className="fixed inset-0 z-30 flex">
+						{/* backdrop */}
+						<button aria-hidden className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowNav(false)} />
+						{/* sliding panel */}
+						<motion.aside initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 260, damping: 28 }} className="ml-auto w-72 max-w-full bg-white/95 backdrop-blur-lg shadow-2xl p-6 flex flex-col gap-6">
+							<div className="flex items-center justify-between">
+								<span className="text-lg font-semibold text-[#222]">Menu</span>
+								<button onClick={() => setShowNav(false)} aria-label="Tutup menu" className="text-gray-700 bg-white/60 hover:text-[#bfa16a] rounded-full p-2 shadow">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+								</button>
+							</div>
+							<nav className="flex flex-col gap-4 mt-2">
+								{["Home", "Fragrances", "Collections", "About", "Contact"].map((item) => (
+									<button key={item} onClick={() => { handleNavClick(item); setShowNav(false); }} className="text-left text-lg font-medium text-[#111] hover:text-[#bfa16a] transition py-2">
+										{item}
+									</button>
+								))}
+							</nav>
+							<div className="mt-auto">
+								<hr className="border-gray-200 mb-4" />
+								<div className="flex gap-3">
+									<a href="#" className="text-gray-600 hover:text-[#bfa16a]">Instagram</a>
+									<a href="#" className="text-gray-600 hover:text-[#bfa16a]">Tokopedia</a>
+									<a href="#" className="text-gray-600 hover:text-[#bfa16a]">Shopee</a>
+								</div>
+							</div>
+						</motion.aside>
+					</div>
+				)}
+					<ul className={`hidden sm:flex flex-col sm:flex-row gap-4 sm:gap-8 text-sm font-medium sm:bg-transparent sm:static sm:top-auto transition-all duration-300 z-20`}>
 		 				{[
 		 					"Home", "Fragrances", "Collections", "About", "Contact"
 		 				].map((item, i) => (
@@ -544,11 +562,18 @@ useEffect(() => {
 		 			</ul>
 			</motion.nav>
 
- 			{/* Hero Section with SwiperJS vertical, pagination, mousewheel, and full background image + animated SVG blob + parallax */}
+ 			{/* Hero Section with SwiperJS vertical, pagination, and full background image + animated SVG blob + parallax */}
  			<motion.section
  				ref={heroRef}
- 				className="relative w-full flex items-center justify-center overflow-hidden select-none mt-20"
- 				style={{ background: 'linear-gradient(120deg, #f7e8d0 0%, #e9e6f6 100%)', backgroundSize: 'cover', backgroundPosition: 'center 0px', minHeight: '400px', height: '60vh' }}
+ 				className="relative w-full flex items-center justify-center overflow-hidden select-none mt-20 touch-pan-y"
+ 				style={{ 
+					background: 'linear-gradient(120deg, #f7e8d0 0%, #e9e6f6 100%)', 
+					backgroundSize: 'cover', 
+					backgroundPosition: 'center 0px', 
+					minHeight: '400px', 
+					height: '60vh',
+					touchAction: 'pan-y pinch-zoom'
+				}}
  				initial={{ opacity: 0, y: 60 }}
  				whileInView={{ opacity: 1, y: 0 }}
  				viewport={{ once: true, amount: 0.3 }}
@@ -560,14 +585,20 @@ useEffect(() => {
 				</motion.svg>
 		<Swiper
 			direction="vertical"
-			modules={[Mousewheel, Pagination, Autoplay]}
+			modules={[Pagination, Autoplay]}
 			slidesPerView={1}
 			spaceBetween={30}
-			mousewheel={true}
+			touchRatio={0}
+			simulateTouch={false}
+			allowTouchMove={false}
 			pagination={{ clickable: true }}
 			autoplay={{ delay: 5000, disableOnInteraction: false }}
-			className="w-full h-full mySwiper"
-			style={{ minHeight: '400px', height: '60vh' }}
+			className="w-full h-full mySwiper touch-pan-y"
+			style={{ 
+				minHeight: '400px', 
+				height: '60vh',
+				touchAction: 'pan-y pinch-zoom'
+			}}
 		>
 					{[
 						{ bg: "/wallpaper1.jpg", text: "GOOD PLACE" },
@@ -640,10 +671,13 @@ useEffect(() => {
 					whileInView={{ opacity: 1, x: 0 }}
 					viewport={{ once: true }}
 					transition={{ duration: 0.7 }}
-					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex justify-center items-center w-full"
+					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex flex-col justify-center items-center w-full gap-8"
 					tabIndex={0}
 				>
-					<span className="relative group-hover:text-[#bfa16a] group-focus:text-[#bfa16a] transition-colors duration-200 text-center">
+					<div className="w-full max-w-3xl mx-auto">
+						<MobileSmartSearch openProduct={openProduct} products={parfumRows.flat()} />
+					</div>
+					<span className="relative group-hover:text-[#bfa16a] group-focus:text-[#bfa16a] transition-colors duration-200 text-center mt-2">
 						Koleksi Parfum
 						{/* base underline + animated gold overlay */}
 						<span className="pointer-events-none absolute left-0 -bottom-1 w-full h-[3px]">
@@ -677,7 +711,7 @@ useEffect(() => {
 					{(() => {
 						const isRound = product.images[0]?.includes('catalog2.png');
 						return (
-							<div className={`relative w-full max-w-xs sm:max-w-[320px] aspect-square mb-3 sm:mb-4 overflow-hidden mx-auto ${isRound ? 'rounded-3xl' : 'rounded-xl'}`}>
+							<div className={`relative w-full max-w-[340px] sm:max-w-[340px] aspect-square mb-3 sm:mb-4 overflow-hidden mx-auto ${isRound ? 'rounded-3xl' : 'rounded-xl'}`}>
 								<Image
 										src={product.images[0]}
 										alt={product.name}
@@ -701,7 +735,7 @@ useEffect(() => {
 												data-animate="true"
 												data-tooltip={`Produk baru — ${product.name}`}
 												aria-label={`Produk baru: ${product.name}. Klik untuk info`}
-												onClick={(e) => { e.stopPropagation(); toast(product.name + ' is new ✨', { icon: '🌟' }); }}
+												// onClick={(e) => { e.stopPropagation(); toast(product.name + ' is new ✨', { icon: '🌟' }); }}
 												onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toast(product.name + ' is new ✨', { icon: '🌟' }); } }}
 											>
 												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="#bfa16a" strokeWidth="1.5">
@@ -759,69 +793,19 @@ useEffect(() => {
 		  </div>
 		</div>
 			</motion.section>
-			{/* Luxury Gallery - Embla Carousel */}
-			<motion.section
-				className="py-10 sm:py-20 px-4 sm:px-8 relative overflow-hidden"
-				initial={{ opacity: 0, y: 60 }}
-				whileInView={{ opacity: 1, y: 0 }}
-				viewport={{ once: true, amount: 0.3 }}
-				transition={{ duration: 0.8 }}
-			>
-	  {/* Siluet di luxury gallery dihapus sesuai permintaan */}
-				<motion.h2
-					initial={{ opacity: 0, x: 60 }}
-					whileInView={{ opacity: 1, x: 0 }}
-					viewport={{ once: true }}
-					transition={{ duration: 0.7 }}
-					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex justify-center items-center w-full z-10"
-					tabIndex={0}
-				>
-						<span className="relative group-hover:text-[#bfa16a] group-focus:text-[#bfa16a] transition-colors duration-200 text-center">
-							Luxury Gallery
-							<span className="pointer-events-none absolute left-0 -bottom-1 w-full h-[3px]">
-								<span className="block w-full h-full bg-[#000] rounded opacity-95" />
-								<span className="absolute left-0 top-0 h-full w-full bg-[#bfa16a] rounded origin-left transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100 group-focus:scale-x-100" />
-							</span>
-						</span>
-				</motion.h2>
-				<div className="">
-								<EmblaCarousel
-									slides={[
-										{
-											image: '/catalog1.png',
-											title: 'FRUIROSA',
-											desc: ' Parfum wanita floral fruity yang ceria dan ringan. Aroma nanas dan markisa yang tropis di awal, bunga peony dan persik di tengah, lalu musk dan amber di dasar. Sempurna untuk hari-hari cerah atau liburan ',
-											imageSize: { width: 720, height: 720 }
-										},
-										{
-											image: '/vercel.svg',
-											title: 'Aqua Universalis',
-											desc: 'Segar, ceria, cocok untuk sehari-hari.',
-											imageSize: { width: 180, height: 180 }
-										},
-										{
-											image: '/window.svg',
-											title: 'Oud Satin Mood',
-											desc: 'Mewah dan Memikat.',
-											imageSize: { width: 180, height: 180 }
-										}
-									]}
-									options={{ loop: true, align: 'start' }}
-								/>
-				</div>
-			</motion.section>
+			
 
 			{/* Best Seller */}
- 			<motion.section
- 				ref={bestSellerRef}
- 				className="px-4 sm:px-8 py-10 sm:py-16"
- 				initial={{ opacity: 0, y: 60 }}
- 				whileInView={{ opacity: 1, y: 0 }}
- 				viewport={{ once: true, amount: 0.5 }}
- 				transition={{ duration: 0.8 }}
+			<motion.section
+				ref={bestSellerRef}
+				className="py-6 sm:py-20 px-4 sm:px-8 relative overflow-hidden"
+	 		initial={{ opacity: 0, y: 60 }}
+	 		whileInView={{ opacity: 1, y: 0 }}
+	 		viewport={{ once: true, amount: 0.3 }}
+	 		transition={{ duration: 0.8 }}
  			>
 				<motion.h2
-					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex justify-center items-center w-full"
+					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex justify-center items-center w-full z-10"
 					tabIndex={0}
 				>
 					<span className="relative group-hover:text-[#bfa16a] group-focus:text-[#bfa16a] transition-colors duration-200 text-center">
@@ -887,6 +871,14 @@ useEffect(() => {
 							ariaHideApp={false}
 							shouldCloseOnOverlayClick={true}
 						>
+							{/* Fixed close for small screens (ensures visible even if dialog content scrolls) */}
+							<button
+								onClick={() => closeModal()}
+								className="fixed top-4 right-4 z-60 md:hidden bg-white/90 text-gray-700 hover:text-[#bfa16a] rounded-full p-2 shadow-lg"
+								aria-label="Tutup"
+							>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+							</button>
 							<m.div
 								initial={{ opacity: 0, scale: 0.85, y: 60 }}
 								animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -904,7 +896,7 @@ useEffect(() => {
 								</button>
 								{/* Product image carousel */}
 								<div className="w-full flex flex-col items-center mb-4">
-																	<div className="relative w-full max-w-xs sm:max-w-[340px] aspect-square mb-2 mx-auto">
+																	<div className="relative w-full max-w-[340px] aspect-square mb-2 mx-auto">
 																		<div className="relative w-full h-full flex flex-row items-center justify-center">
 																			{/* Zoom controls */}
 							                                                                    <div className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2">
@@ -1217,8 +1209,8 @@ useEffect(() => {
 	  {/* Highlight */}
 	  <rect x="60" y="80" width="8" height="40" rx="2" fill="#fff8f0" opacity="0.18" />
 		</motion.svg>
-		<div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6 sm:gap-8 px-4 text-left">
-		  <div className="flex flex-col items-start gap-4 w-full md:w-auto">
+						<div className="max-w-6xl mx-auto flex flex-col md:flex-row md:flex-nowrap justify-between items-start md:items-start gap-4 sm:gap-6 px-4 text-left">
+							<div className="flex flex-col items-start gap-4 w-full md:w-1/3">
 						<span className="text-2xl font-bold tracking-wide">Good Place</span>
 						<span className="text-sm text-gray-400">Seni Keharuman Mewah & Modern</span>
 						<div className="flex gap-4 mt-2">
@@ -1257,7 +1249,7 @@ useEffect(() => {
 							</motion.a>
 						</div>
 						{/* Scroll to top button */}
-						{showScroll && (
+						{/* {showScroll && (
 							<motion.button
 								initial={{ opacity: 0, y: 40 }}
 								animate={{ opacity: 1, y: 0 }}
@@ -1273,7 +1265,7 @@ useEffect(() => {
 								</span>
 								<svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
 							</motion.button>
-						)}
+						)} */}
 						{/* Floating WhatsApp chat button */}
 						<motion.a
 							href="https://wa.me/6288801858508"
@@ -1301,7 +1293,7 @@ useEffect(() => {
   `}</style>
 					</div>
 		  {/* Accordion Kontak */}
-		  <div className="flex flex-col gap-2 items-start w-full md:w-auto mt-6 md:mt-0">
+		  <div className="flex flex-col gap-2 items-start w-full md:w-1/6 mt-6 md:mt-0">
 			<button
 			  className="flex items-center justify-between w-full md:w-auto font-semibold mb-2 focus:outline-none"
 			  onClick={() => toggleAccordion('kontak')}
@@ -1313,7 +1305,7 @@ useEffect(() => {
 			</button>
 			<div
 			  id="footer-kontak"
-			  className={`flex flex-col gap-2 pl-2 transition-all duration-300 overflow-hidden
+			  className={`flex flex-col gap-3 transition-all duration-300 overflow-hidden
 				${footerAccordion.kontak ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}
 				md:max-h-none md:opacity-100 md:pl-0
 				${footerAccordion.kontak ? 'pointer-events-auto' : 'pointer-events-none'}
@@ -1325,8 +1317,34 @@ useEffect(() => {
 			  <span className="text-sm text-gray-400">Alamat: Bandung, Indonesia</span>
 			</div>
 		  </div>
+					{/* Marketplace accordion (mobile) */}
+					<div className="flex flex-col gap-2 items-start w-full md:w-1/6 mt-6 md:mt-0">
+						<button
+							className="flex items-center justify-between w-full md:w-auto font-semibold mb-2 focus:outline-none"
+							onClick={() => toggleAccordion('marketplace')}
+							aria-expanded={footerAccordion.marketplace}
+							aria-controls="footer-marketplace"
+						>
+							Marketplace
+							<svg className={`ml-2 transition-transform duration-200 ${footerAccordion.marketplace ? 'rotate-90' : ''}`} width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6l4 4 4-4"/></svg>
+						</button>
+						<div
+							id="footer-marketplace"
+							className={`flex flex-col gap-2 pl-2 transition-all duration-300 overflow-hidden
+								${footerAccordion.marketplace ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}
+								md:max-h-none md:opacity-100 md:pl-0
+								${footerAccordion.marketplace ? 'pointer-events-auto' : 'pointer-events-none'}
+								md:pointer-events-auto
+							`}
+						>
+							<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Shopee</a>
+							<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Tokopedia</a>
+							<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Lazada</a>
+							<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Tik Tok Shop</a>
+						</div>
+					</div>
 		  {/* Accordion Tautan Cepat */}
-		  <div className="flex flex-col gap-2 items-start w-full md:w-auto mt-6 md:mt-0">
+		  <div className="flex flex-col gap-2 items-start w-full md:w-1/6 mt-6 md:mt-0">
 			<button
 			  className="flex items-center justify-between w-full md:w-auto font-semibold mb-2 focus:outline-none"
 			  onClick={() => toggleAccordion('tautan')}
@@ -1345,15 +1363,21 @@ useEffect(() => {
 				md:pointer-events-auto
 			  `}
 			>
-			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Koleksi</a>
-			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Tentang Kami</a>
-			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Majalah</a>
-			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Kontak</a>
+			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Instagram</a>
+					<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Twitter</a>
+					<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Tiktok</a>
+					<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Youtube</a>
+					<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Linkedln</a>
 			</div>
+			{/* Marketplace */}
+
+				
 		  </div>
 				</div>
 				<div className="border-t border-gray-700 mt-8 pt-4 text-center text-xs text-white">© 2025 Good Place. All rights reserved.</div>
 			</footer>
+			<ScrollToTop />
+			<ChatBot />
 		</div>
 	);
 }
