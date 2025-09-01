@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 // Google Fonts: Inter (sans-serif) and Playfair Display (serif)
 import "./globals.css";
+import { FloatingButtonsProvider } from "@/context/FloatingButtonsContext";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -29,7 +30,11 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/logoputih.jpg" type="image/png" sizes="64x64" />
       </head>
-      <body>{children}</body>
+      <body>
+        <FloatingButtonsProvider>
+          {children}
+        </FloatingButtonsProvider>
+      </body>
     </html>
   );
 }

@@ -6,20 +6,26 @@ import SwiperCore from 'swiper';
 import "swiper/css";
 import "swiper/css/mousewheel";
 import "swiper/css/pagination";
-import { Mousewheel, Pagination, Autoplay } from "swiper/modules";
-import { motion } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { Pagination, Autoplay } from "swiper/modules";
+import { motion, AnimatePresence } from "framer-motion";
+import { motion as m } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
 import Modal from "react-modal";
-import { AnimatePresence, motion as m } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 // ...existing code...
 import EmblaCarousel from "@/components/EmblaCarousel";
+import ChatBot from "@/components/ChatBot";
+import ScrollToTop from "@/components/ScrollToTop";
+import SmartSearch from "@/components/SmartSearch";
+import MobileSmartSearch from "@/components/MobileSmartSearch";
+import { useFloatingButtons } from '@/context/FloatingButtonsContext';
 // import { sub } from "framer-motion/client";
 
+// Convert array to be compatible with both components
 const products = [
 	{
-		name: "FRUIROSA PERFUME Eau De Parfum",
-		images: ["/catalog2.png", "/catalog1.png"],
+		name: "Fruirosa Perfume Eau De Parfum",
+		images: ["/parfum2.png", "/catalog1.png"],
 		// price: "$325",
 		desc: " Parfum wanita floral fruity yang ceria dan ringan. Aroma nanas dan markisa yang tropis di awal, bunga peony dan persik di tengah, lalu musk dan amber di dasar. Sempurna untuk hari-hari cerah atau\u00a0liburan.",
         
@@ -74,6 +80,8 @@ export default function Home() {
 			 document.removeEventListener('selectstart', handleSelectStart);
 		 };
 	 }, []);
+
+	const { hidden } = useFloatingButtons();
 	const [showCookie, setShowCookie] = useState(false);
 	const [modalIsOpen, setModalIsOpen] = useState(false);	
 		const [loading, setLoading] = useState(true);
@@ -113,7 +121,7 @@ export default function Home() {
 
 			const startPointerDrag = (e: React.PointerEvent<HTMLDivElement>, idx: number) => {
 				const zoom = modalZoomes[idx] ?? 1;
-				if (zoom <= 1) return; // only pan when zoomed
+				if (zoom <= 1) return; 
 				try { (e.target as Element).setPointerCapture?.(e.pointerId); } catch { /* ignore */ }
 				draggingRef.current = {
 					idx,
@@ -252,11 +260,25 @@ export default function Home() {
 		return () => window.removeEventListener('scroll', handleScroll);
 	}, []);
 
-	// Scroll to top button
+	// Scroll to top button and footer visibility
 	const [showScroll, setShowScroll] = useState(false);
+	const [isNearFooter, setIsNearFooter] = useState(false);
+
 	useEffect(() => {
-		const onScroll = () => setShowScroll(window.scrollY > 300);
+		const onScroll = () => {
+			setShowScroll(window.scrollY > 300);
+			
+			// Check footer visibility
+			const footer = document.querySelector('footer');
+			if (footer) {
+				const footerRect = footer.getBoundingClientRect();
+				const threshold = 150; // pixels before footer
+				setIsNearFooter(footerRect.top - window.innerHeight + threshold < 0);
+			}
+		};
+		
 		window.addEventListener('scroll', onScroll);
+		onScroll(); // Check initially
 		return () => window.removeEventListener('scroll', onScroll);
 	}, []);
 
@@ -276,21 +298,22 @@ export default function Home() {
 		e.currentTarget.style.transform = '';
 	}
 
-  // Accordion state for footer
-  const [footerAccordion, setFooterAccordion] = useState({
-	kontak: false,
-	tautan: false,
-  });
+	// Accordion state for footer
+	const [footerAccordion, setFooterAccordion] = useState({
+		kontak: false,
+		tautan: false,
+		marketplace: false,
+	});
 
-  const toggleAccordion = (key: 'kontak' | 'tautan') => {
-	setFooterAccordion((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
+	const toggleAccordion = (key: 'kontak' | 'tautan' | 'marketplace') => {
+		setFooterAccordion((prev) => ({ ...prev, [key]: !prev[key] }));
+	};
 
   // Pagination state for Koleksi Parfume
 	const parfumRows = [
 		[products[0], products[1], products[2]],
 		[
-			{ name: "Amyris Femme", images: ["/catalog2.png", "/catalog1.png"], price: "$295", desc: "Aroma floral lembut dan feminin." },
+			{ name: "Amyris Femme", images: ["/catalog2.png", "/catalog1.png"], price: "$295", desc: "Parfum wanita floral fruity yang ceria dan ringan. Aroma nanas dan markisa yang tropis di awal, bunga peony dan persik di tengah, lalu musk dan amber di dasar. Sempurna untuk hari-hari cerah atau\u00a0liburan.." },
 			{ name: "Gentle Fluidity Gold", images: ["/catalog2.png", "/catalog1.png"], price: "$310", desc: "Wangi musky vanilla yang elegan." },
 			{ name: "L'Homme À la rose", images: ["/catalog2.png", "/catalog1.png"], price: "$280", desc: "Maskulin segar dengan sentuhan rose." },
 		],
@@ -346,7 +369,8 @@ useEffect(() => {
  };
 
  return (
- 	<div
+	<React.Fragment>
+		<div
 			ref={homeRef}
 			className="min-h-screen text-black font-sans relative overflow-x-hidden"
 			style={{
@@ -358,7 +382,6 @@ useEffect(() => {
 				backgroundSize: 'cover',
 				backgroundRepeat: 'no-repeat',
 				backgroundPosition: 'center center',
-				// opacity: 0.8
 			}}
 		>
 		<Toaster position="top-right" />
@@ -397,7 +420,7 @@ useEffect(() => {
 						onClick={() => {
 							localStorage.setItem('gp_cookie_consent', 'declined');
 							setShowCookie(false);
-							toast('Cookies declined', { icon: '🚫' });
+							// toast('Cookies declined', { icon: '🚫' });
 						}}
 						aria-label="Decline Cookies"
 					>
@@ -473,52 +496,64 @@ useEffect(() => {
 					   className="object-contain h-35 w-35"
 				   />
 			   </motion.div>
-				{/* Responsive nav: hamburger for mobile */}
-		<div className="block sm:hidden absolute left-4 top-1/2 -translate-y-1/2 z-30">
-			<button
-				onClick={() => setShowNav(!showNav)}
-				aria-label={showNav ? "Tutup menu" : "Buka menu"}
-				className="text-black focus:outline-none relative w-10 h-10 flex items-center justify-center"
-			>
-				<motion.span
-					initial={false}
-					animate={showNav ? "open" : "closed"}
-					variants={{}}
-					className="block w-7 h-7 relative"
-				>
-					{/* Bar 1 */}
-					<motion.span
-						variants={{
-							closed: { rotate: 0, y: 0, background: '#222' },
-							open: { rotate: 45, y: 10, background: '#bfa16a' },
-						}}
-						transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-						className="absolute left-0 top-2 w-7 h-1 rounded bg-black block"
-						style={{ originX: 0 }}
-					/>
-					{/* Bar 2 */}
-					<motion.span
-						variants={{
-							closed: { opacity: 1, background: '#222' },
-							open: { opacity: 0, background: '#bfa16a' },
-						}}
-						transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-						className="absolute left-0 top-5 w-7 h-1 rounded bg-black block"
-					/>
-					{/* Bar 3 */}
-					<motion.span
-						variants={{
-							closed: { rotate: 0, y: 0, background: '#222' },
-							open: { rotate: -45, y: -10, background: '#bfa16a' },
-						}}
-						transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-						className="absolute left-0 top-8 w-7 h-1 rounded bg-black block"
-						style={{ originX: 0 }}
-					/>
-				</motion.span>
-			</button>
-		</div>
-		 			<ul className={`flex-col sm:flex-row flex gap-4 sm:gap-8 text-sm font-medium bg-white sm:bg-transparent absolute sm:static left-0 right-0 top-16 sm:top-auto shadow-md sm:shadow-none transition-all duration-300 z-20 ${showNav ? 'flex' : 'hidden sm:flex'}`}>
+
+               {/* Smart Search */}
+               <motion.div
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   transition={{ duration: 0.7, delay: 0.2 }}
+                   className="hidden md:block flex-1 max-w-xl mx-8"
+               >
+                   <SmartSearch openProduct={openProduct} products={parfumRows.flat()} />
+               </motion.div>
+				{/* Responsive nav: modern hamburger + drawer for mobile */}
+				<div className="block sm:hidden absolute left-4 top-1/2 -translate-y-1/2 z-40">
+					<button
+						onClick={() => setShowNav(!showNav)}
+						aria-label={showNav ? "Tutup menu" : "Buka menu"}
+						className="relative w-11 h-11 flex items-center justify-center rounded-full border border-transparent hover:border-[#bfa16a] bg-white/95 shadow-lg focus:outline-none transition-all duration-250"
+					>
+						{/* Elegant animated hamburger lines */}
+						<motion.span initial={false} animate={showNav ? { rotate: 90 } : { rotate: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26 }} className="block w-6 h-6 relative">
+							<motion.span animate={showNav ? { y: 6, rotate: 45, background: '#bfa16a' } : { y: 0, rotate: 0, background: '#222' }} transition={{ duration: 0.28 }} className="absolute left-0 top-0 w-6 h-[2px] rounded-full bg-black" />
+							<motion.span animate={showNav ? { opacity: 0 } : { opacity: 1 }} transition={{ duration: 0.2 }} className="absolute left-0 top-2 w-6 h-[2px] rounded-full bg-black" />
+							<motion.span animate={showNav ? { y: -6, rotate: -45, background: '#bfa16a' } : { y: 4, rotate: 0, background: '#222' }} transition={{ duration: 0.28 }} className="absolute left-0 top-4 w-6 h-[2px] rounded-full bg-black" />
+						</motion.span>
+					</button>
+				</div>
+
+				{/* Mobile drawer overlay */}
+				{showNav && (
+					<div className="fixed inset-0 z-30 flex">
+						{/* backdrop */}
+						<button aria-hidden className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowNav(false)} />
+						{/* sliding panel */}
+						<motion.aside initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 260, damping: 28 }} className="ml-auto w-72 max-w-full bg-white/95 backdrop-blur-lg shadow-2xl p-6 flex flex-col gap-6">
+							<div className="flex items-center justify-between">
+								<span className="text-lg font-semibold text-[#222]">Menu</span>
+								<button onClick={() => setShowNav(false)} aria-label="Tutup menu" className="text-gray-700 bg-white/60 hover:text-[#bfa16a] rounded-full p-2 shadow">
+									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+								</button>
+							</div>
+							<nav className="flex flex-col gap-4 mt-2">
+								{["Home", "Fragrances", "Collections", "About", "Contact"].map((item) => (
+									<button key={item} onClick={() => { handleNavClick(item); setShowNav(false); }} className="text-left text-lg font-medium text-[#111] hover:text-[#bfa16a] transition py-2">
+										{item}
+									</button>
+								))}
+							</nav>
+							<div className="mt-auto">
+								<hr className="border-gray-200 mb-4" />
+								<div className="flex gap-3">
+									<a href="#" className="text-gray-600 hover:text-[#bfa16a]">Instagram</a>
+									<a href="#" className="text-gray-600 hover:text-[#bfa16a]">Tokopedia</a>
+									<a href="#" className="text-gray-600 hover:text-[#bfa16a]">Shopee</a>
+								</div>
+							</div>
+						</motion.aside>
+					</div>
+				)}
+					<ul className={`hidden sm:flex flex-col sm:flex-row gap-4 sm:gap-8 text-sm font-medium sm:bg-transparent sm:static sm:top-auto transition-all duration-300 z-20`}>
 		 				{[
 		 					"Home", "Fragrances", "Collections", "About", "Contact"
 		 				].map((item, i) => (
@@ -544,11 +579,18 @@ useEffect(() => {
 		 			</ul>
 			</motion.nav>
 
- 			{/* Hero Section with SwiperJS vertical, pagination, mousewheel, and full background image + animated SVG blob + parallax */}
+ 			{/* Hero Section with SwiperJS vertical, pagination, and full background image + animated SVG blob + parallax */}
  			<motion.section
  				ref={heroRef}
- 				className="relative w-full flex items-center justify-center overflow-hidden select-none mt-20"
- 				style={{ background: 'linear-gradient(120deg, #f7e8d0 0%, #e9e6f6 100%)', backgroundSize: 'cover', backgroundPosition: 'center 0px', minHeight: '400px', height: '60vh' }}
+ 				className="relative w-full flex items-center justify-center overflow-hidden select-none mt-20 touch-pan-y"
+ 				style={{ 
+					background: 'linear-gradient(120deg, #f7e8d0 0%, #e9e6f6 100%)', 
+					backgroundSize: 'cover', 
+					backgroundPosition: 'center 0px', 
+					minHeight: '400px', 
+					height: '60vh',
+					touchAction: 'pan-y pinch-zoom'
+				}}
  				initial={{ opacity: 0, y: 60 }}
  				whileInView={{ opacity: 1, y: 0 }}
  				viewport={{ once: true, amount: 0.3 }}
@@ -560,14 +602,20 @@ useEffect(() => {
 				</motion.svg>
 		<Swiper
 			direction="vertical"
-			modules={[Mousewheel, Pagination, Autoplay]}
+			modules={[Pagination, Autoplay]}
 			slidesPerView={1}
 			spaceBetween={30}
-			mousewheel={true}
+			touchRatio={0}
+			simulateTouch={false}
+			allowTouchMove={false}
 			pagination={{ clickable: true }}
 			autoplay={{ delay: 5000, disableOnInteraction: false }}
-			className="w-full h-full mySwiper"
-			style={{ minHeight: '400px', height: '60vh' }}
+			className="w-full h-full mySwiper touch-pan-y"
+			style={{ 
+				minHeight: '400px', 
+				height: '60vh',
+				touchAction: 'pan-y pinch-zoom'
+			}}
 		>
 					{[
 						{ bg: "/wallpaper1.jpg", text: "GOOD PLACE" },
@@ -627,20 +675,20 @@ useEffect(() => {
 	`}</style>
 			</motion.section>
 
- 			<motion.section
- 				ref={koleksiRef}
- 				className="relative px-4 sm:px-8 md:px-12 pb-10 sm:pb-16 mt-10 sm:mt-16"
- 				initial={{ opacity: 0, y: 60 }}
- 				whileInView={{ opacity: 1, y: 0 }}
- 				viewport={{ once: true, amount: 0.3 }}
- 				transition={{ duration: 0.8 }}
- 			>
+      <motion.section
+        ref={koleksiRef}
+        className="relative px-4 sm:px-8 md:px-12 pb-10 sm:pb-16 mt-10 sm:mt-16"
+        initial={{ opacity: 0, y: 60 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.8 }}
+      >
 				<motion.h2
 					initial={{ opacity: 0, x: -60 }}
 					whileInView={{ opacity: 1, x: 0 }}
 					viewport={{ once: true }}
 					transition={{ duration: 0.7 }}
-					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex justify-center items-center w-full"
+					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex flex-col justify-center items-center w-full gap-8"
 					tabIndex={0}
 				>
 					<span className="relative group-hover:text-[#bfa16a] group-focus:text-[#bfa16a] transition-colors duration-200 text-center">
@@ -653,175 +701,204 @@ useEffect(() => {
 							<span className="absolute left-0 top-0 h-full w-full bg-[#bfa16a] rounded origin-left transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100 group-focus:scale-x-100" />
 						</span>
 					</span>
+					<div className="w-full max-w-3xl mx-auto mt-4">
+						<MobileSmartSearch openProduct={openProduct} products={parfumRows.flat()} />
+					</div>
 				</motion.h2>
-		<div className="max-w-6xl mx-auto flex flex-col gap-6 sm:gap-10">
-					{parfumPages[parfumPage].map((row, i) => (
-						<div key={i} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-8">
-							{row.map((product, j) => (
+        <div className="max-w-6xl mx-auto flex flex-col gap-4 sm:gap-10 px-4 sm:px-6">
+          {parfumPages[parfumPage].map((row, i) => (
+            <div key={i} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+              {row.map((product, j) => (
 								<motion.div
 									key={j}
-									initial={{ opacity: 0, y: 16 }}
+									initial={{ opacity: 0, y: 18 }}
 									whileInView={{ opacity: 1, y: 0 }}
 									viewport={{ once: true }}
-									transition={{ duration: 0.45, delay: j * 0.06 }}
-									whileHover={{ boxShadow: '0 8px 32px 0 rgba(191,161,106,0.18)', zIndex: 2 }}
-									className="product-card group bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col items-center transition hover:shadow-2xl border border-[#e5e5e5] cursor-pointer will-change-transform w-full"
-									onMouseMove={handleTilt}
-									onMouseLeave={resetTilt}
+									transition={{ duration: 0.48, delay: j * 0.06 }}
+									className="group w-full focus-within:ring-0"
 									onClick={() => openProduct(product)}
 									onKeyDown={(e) => handleCardKey(e, product)}
 									tabIndex={0}
 									role="button"
 									aria-label={`Lihat detail ${product.name}`}
 								>
-					{(() => {
-						const isRound = product.images[0]?.includes('catalog2.png');
-						return (
-							<div className={`relative w-full max-w-xs sm:max-w-[320px] aspect-square mb-3 sm:mb-4 overflow-hidden mx-auto ${isRound ? 'rounded-3xl' : 'rounded-xl'}`}>
-								<Image
-										src={product.images[0]}
-										alt={product.name}
-										fill
-										className={`${isRound ? 'object-cover rounded-3xl' : 'object-cover rounded-xl'} card-media group-hover:scale-105 transition-transform duration-300`}
-										sizes="(max-width: 640px) 80vw, 320px"
-									/>
-								<div className={`absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${isRound ? 'rounded-3xl' : 'rounded-xl'}`}>
-									<span className="text-white text-base sm:text-lg font-bold flex items-center gap-2">
-										<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="white" strokeWidth="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-										Lihat Detail
-									</span>
-								</div>
-							</div>
-						);
-					})()}
-									{/* NEW badge (centered above FRUIROSA product name) */}
-										<div className="flex justify-center mb-2 -mt-1" aria-hidden>
-											<button
-												className="badge-new"
-												data-animate="true"
-												data-tooltip={`Produk baru — ${product.name}`}
-												aria-label={`Produk baru: ${product.name}. Klik untuk info`}
-												onClick={(e) => { e.stopPropagation(); toast(product.name + ' is new ✨', { icon: '🌟' }); }}
-												onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toast(product.name + ' is new ✨', { icon: '🌟' }); } }}
-											>
-												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="#bfa16a" strokeWidth="1.5">
-													<path strokeLinecap="round" strokeLinejoin="round" d="M12 2l1.9 4.3L18 8l-4 2.8L14 16l-2-1.4L10 16l.9-5.2L7 8l4.1-1.7L12 2z" />
-												</svg>
-												NEW
-											</button>
+									<div className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-transparent hover:border-[#eee] hover:-translate-y-0.5">
+										{/* Image panel */}
+										<div className="relative w-full aspect-square sm:aspect-[4/3] bg-gray-50 flex-shrink-0 group/image">
+											{/* Elegant NEW badge */}
+											<div className="absolute top-4 left-4 z-10">
+												<div className="relative">
+													<div className="absolute inset-0 bg-[#bfa16a] blur-[2px] rounded-lg opacity-50"></div>
+													<div className="relative bg-gradient-to-r from-[#dd0909] to-[#cfb002] rounded-lg flex items-center justify-center min-w-[50px] min-h-[24px]">
+														<span className="text-xs font-semibold text-white tracking-wider px-2">NEW</span>
+													</div>
+												</div>
+											</div>
+											<Image
+												src={product.images[0]}
+												alt={product.name}
+												fill
+												className="object-cover w-full h-full transition-transform duration-700 group-hover/image:scale-105"
+												sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+											/>
+											<div className="absolute inset-0 opacity-0 group-hover/image:opacity-100 transition-all duration-700 backdrop-blur-[3px]">
+												{/* Premium layered background */}
+												<div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50"></div>
+												<div className="absolute inset-0 bg-[#bfa16a]/10 mix-blend-overlay"></div>
+												
+												<div className="absolute inset-0 flex items-center justify-center">
+													<div className="relative group/icon">
+														{/* Luxury outer glow effects */}
+														<div className="absolute -inset-8 bg-gradient-conic from-[#bfa16a] via-white to-[#bfa16a] opacity-20 rounded-full blur-xl transform scale-0 group-hover/image:scale-100 transition-transform duration-1000"></div>
+														<div className="absolute -inset-6 bg-gradient-to-r from-[#bfa16a]/40 via-white/40 to-[#bfa16a]/40 rounded-full blur-lg transform scale-0 group-hover/image:scale-100 transition-transform duration-700 delay-100"></div>
+														
+														{/* Animated rings */}
+														<div className="absolute -inset-4 rounded-full opacity-0 group-hover/image:opacity-100 transition-opacity duration-700 delay-200">
+															<div className="absolute inset-0 rounded-full border border-[#bfa16a]/20 animate-[ping_3s_ease-in-out_infinite]"></div>
+															<div className="absolute inset-0 rounded-full border border-[#bfa16a]/20 animate-[ping_3s_ease-in-out_1s_infinite]"></div>
+														</div>
+														
+														{/* Inner glow and pulse */}
+														<div className="absolute -inset-2 bg-gradient-radial from-[#bfa16a]/30 to-transparent rounded-full blur-md opacity-0 group-hover/image:opacity-100 animate-pulse"></div>
+														
+														{/* Main button with premium effects */}
+														<button className="relative transform scale-90 group-hover/image:scale-100 transition-all duration-700 ease-out">
+															{/* Button background layers */}
+															<div className="absolute inset-0 rounded-full bg-gradient-to-br from-white via-[#bfa16a]/10 to-[#bfa16a]/20 blur-sm"></div>
+															<div className="relative bg-white/95 hover:bg-gradient-to-r hover:from-[#bfa16a] hover:to-[#a78f55] p-6 rounded-full shadow-[0_0_30px_rgba(191,161,106,0.3)] hover:shadow-[0_0_40px_rgba(191,161,106,0.5)] backdrop-blur-sm">
+																{/* Luxury icon */}
+																<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" 
+																	className="w-9 h-9 text-[#bfa16a] group-hover/image:text-white transition-colors duration-500 transform group-hover/image:rotate-12 motion-safe:group-hover:animate-pulse">
+																	<path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+																</svg>
+															</div>
+														</button>
+													</div>
+												</div>
+											</div>
 										</div>
-									<div className={`text-2xl sm:text-3xl font-extrabold mb-1 text-black text-center`}>
-										{product.name.includes('Eau De Parfum') ? (
-											<>
-												<span className="block">{product.name.replace(/\s*Eau De Parfum$/i, '')}</span>
-												<span className="block text-sm font-medium text-gray-600 handwritten">Eau De Parfum</span>
-											</>
-										) : (
-											product.name
-										)}
+										{/* Details panel */}
+										<div className="p-4 sm:p-6 flex-1 flex flex-col justify-between">
+											<div>
+												<div className="flex flex-col gap-1">
+													<h3 id={`${product.id ?? `prod-${i}-${j}`}`} className="text-base sm:text-lg font-semibold text-black leading-tight">
+														{product.name.replace(/\s*Eau De Parfum$/i, '')}
+													</h3>
+													<span className="text-sm text-gray-500">{product.name.includes('Eau De Parfum') ? 'Eau De Parfum' : ''}</span>
+												</div>
+												<p className="mt-2 sm:mt-3 text-sm text-gray-600 line-clamp-3 sm:line-clamp-4">{product.desc || 'A refined fragrance crafted with premium ingredients.'}</p>
+											</div>
+											<div className="mt-4 flex items-center justify-between sm:justify-center gap-3 sm:gap-4">
+												<button
+													onClick={(e) => { e.stopPropagation(); openProduct(product); }}
+													className="px-6 py-2 bg-[#bfa16a] text-white rounded-full text-sm font-medium hover:bg-[#a78f55] transition"
+													aria-labelledby={`${product.id ?? `prod-${i}-${j}`}`}
+												>
+													Lihat Detail
+												</button>
+											</div>
+										</div>
 									</div>
-				  <div className="text-[#bfa16a] text-lg sm:text-xl font-bold mb-2 text-center">
-					{product.price}
-				  </div>
-				</motion.div>
+								</motion.div>
 			  ))}
 			</div>
 		  ))}
-		  {/* Pagination UI */}
-		  <div className="flex justify-center items-center gap-2 mt-4 select-none">
-			<button
-			  onClick={() => setParfumPage((p) => Math.max(0, p - 1))}
-			  disabled={parfumPage === 0}
-			  className={`rounded-full w-9 h-9 flex items-center justify-center border border-[#bfa16a] text-[#bfa16a] bg-white shadow transition hover:bg-[#bfa16a] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed`}
-			  aria-label="Sebelumnya"
-			>
-			  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 6l-6 6 6 6"/></svg>
-			</button>
-			{parfumPages.map((_, idx) => (
-			  <button
-				key={idx}
-				onClick={() => setParfumPage(idx)}
-				className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border transition
-				  ${parfumPage === idx ? 'bg-[#bfa16a] text-white border-[#bfa16a]' : 'bg-white text-[#bfa16a] border-[#bfa16a] hover:bg-[#bfa16a] hover:text-white'}`}
-				aria-label={`Halaman ${idx + 1}`}
-			  >
-				{idx + 1}
-			  </button>
-			))}
-			<button
-			  onClick={() => setParfumPage((p) => Math.min(parfumPages.length - 1, p + 1))}
-			  disabled={parfumPage === parfumPages.length - 1}
-			  className={`rounded-full w-9 h-9 flex items-center justify-center border border-[#bfa16a] text-[#bfa16a] bg-white shadow transition hover:bg-[#bfa16a] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed`}
-			  aria-label="Berikutnya"
-			>
-			  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l6 6-6 6"/></svg>
-			</button>
-		  </div>
-		</div>
-			</motion.section>
-			{/* Luxury Gallery - Embla Carousel */}
-			<motion.section
-				className="py-10 sm:py-20 px-4 sm:px-8 relative overflow-hidden"
-				initial={{ opacity: 0, y: 60 }}
-				whileInView={{ opacity: 1, y: 0 }}
-				viewport={{ once: true, amount: 0.3 }}
-				transition={{ duration: 0.8 }}
-			>
-	  {/* Siluet di luxury gallery dihapus sesuai permintaan */}
-				<motion.h2
-					initial={{ opacity: 0, x: 60 }}
-					whileInView={{ opacity: 1, x: 0 }}
-					viewport={{ once: true }}
-					transition={{ duration: 0.7 }}
-					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex justify-center items-center w-full z-10"
-					tabIndex={0}
-				>
-						<span className="relative group-hover:text-[#bfa16a] group-focus:text-[#bfa16a] transition-colors duration-200 text-center">
-							Luxury Gallery
-							<span className="pointer-events-none absolute left-0 -bottom-1 w-full h-[3px]">
-								<span className="block w-full h-full bg-[#000] rounded opacity-95" />
-								<span className="absolute left-0 top-0 h-full w-full bg-[#bfa16a] rounded origin-left transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100 group-focus:scale-x-100" />
-							</span>
-						</span>
-				</motion.h2>
-				<div className="">
-								<EmblaCarousel
-									slides={[
-										{
-											image: '/catalog1.png',
-											title: 'FRUIROSA',
-											desc: ' Parfum wanita floral fruity yang ceria dan ringan. Aroma nanas dan markisa yang tropis di awal, bunga peony dan persik di tengah, lalu musk dan amber di dasar. Sempurna untuk hari-hari cerah atau liburan ',
-											imageSize: { width: 720, height: 720 }
-										},
-										{
-											image: '/vercel.svg',
-											title: 'Aqua Universalis',
-											desc: 'Segar, ceria, cocok untuk sehari-hari.',
-											imageSize: { width: 180, height: 180 }
-										},
-										{
-											image: '/window.svg',
-											title: 'Oud Satin Mood',
-											desc: 'Mewah dan Memikat.',
-											imageSize: { width: 180, height: 180 }
-										}
-									]}
-									options={{ loop: true, align: 'start' }}
-								/>
-				</div>
-			</motion.section>
+		  {/* Modern Pagination UI */}
+          <div className="flex flex-col items-center gap-4 sm:gap-6 mt-6 sm:mt-8 select-none pb-6">
+            {/* Progress Line */}
+            <div className="relative w-32 sm:w-48 h-[2px] bg-gray-200">
+              <div 
+                className="absolute left-0 top-0 h-full bg-[#bfa16a] transition-all duration-500 ease-out"
+                style={{ width: `${((parfumPage + 1) / parfumPages.length) * 100}%` }}
+              />
+            </div>
+            
+            {/* Navigation Controls */}
+            <div className="flex items-center justify-between w-full max-w-[320px] sm:max-w-none px-4 sm:px-0 sm:gap-8">
+              <button
+                onClick={() => setParfumPage((p) => Math.max(0, p - 1))}
+                disabled={parfumPage === 0}
+                className="group flex items-center gap-2 py-2 px-3 sm:px-4 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
+                aria-label="Sebelumnya"
+              >
+                <div className="relative w-6 sm:w-8 overflow-hidden touch-manipulation">
+                  <div className="transform transition-transform duration-300 group-hover:-translate-x-1 group-disabled:translate-x-0 group-active:-translate-x-0.5">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#bfa16a]">
+                      <path d="M12 18l-6-6 6-6"/>
+                    </svg>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-[#bfa16a] block sm:opacity-0 sm:-translate-x-2 transition-all duration-300 sm:group-hover:opacity-100 sm:group-hover:translate-x-0">
+                  Prev
+                </span>
+              </button>
 
-			{/* Best Seller */}
- 			<motion.section
- 				ref={bestSellerRef}
- 				className="px-4 sm:px-8 py-10 sm:py-16"
- 				initial={{ opacity: 0, y: 60 }}
- 				whileInView={{ opacity: 1, y: 0 }}
- 				viewport={{ once: true, amount: 0.5 }}
- 				transition={{ duration: 0.8 }}
+              {/* Dots Indicator - Scrollable on mobile if many pages */}
+              <div className="flex items-center justify-center gap-2.5 sm:gap-3 overflow-x-auto scrollbar-hide py-2 px-1 min-w-[120px]">
+                {parfumPages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setParfumPage(index)}
+                    className={`w-2.5 h-2.5 sm:w-2 sm:h-2 rounded-full transition-all duration-300 touch-manipulation flex-shrink-0 ${
+                      parfumPage === index 
+                        ? 'bg-[#bfa16a] w-5 sm:w-4' 
+                        : 'bg-gray-300 hover:bg-gray-400 active:bg-gray-400'
+                    }`}
+                    aria-label={`Halaman ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={() => setParfumPage((p) => Math.min(parfumPages.length - 1, p + 1))}
+                disabled={parfumPage === parfumPages.length - 1}
+                className="group flex items-center gap-2 py-2 px-3 sm:px-4 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
+                aria-label="Berikutnya"
+              >
+                <span className="text-sm font-medium text-[#bfa16a] block sm:opacity-0 sm:translate-x-2 transition-all duration-300 sm:group-hover:opacity-100 sm:group-hover:translate-x-0">
+                  Next
+                </span>
+                <div className="relative w-6 sm:w-8 overflow-hidden touch-manipulation">
+                  <div className="transform transition-transform duration-300 group-hover:translate-x-1 group-disabled:translate-x-0 group-active:translate-x-0.5">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#bfa16a]">
+                      <path d="M6 6l6 6-6 6"/>
+                    </svg>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Helper styles for mobile */}
+        <style jsx global>{`
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          
+          @media (hover: none) {
+            .touch-manipulation {
+              touch-action: manipulation;
+            }
+          }
+        `}</style>
+      </motion.section>
+
+      {/* Best Seller */}
+			<motion.section
+				ref={bestSellerRef}
+				className="py-6 sm:py-20 px-4 sm:px-8 relative overflow-hidden"
+	 		initial={{ opacity: 0, y: 60 }}
+	 		whileInView={{ opacity: 1, y: 0 }}
+	 		viewport={{ once: true, amount: 0.3 }}
+	 		transition={{ duration: 0.8 }}
  			>
 				<motion.h2
-					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex justify-center items-center w-full"
+					className="text-3xl font-light mb-10 text-black relative group cursor-pointer flex justify-center items-center w-full z-10"
 					tabIndex={0}
 				>
 					<span className="relative group-hover:text-[#bfa16a] group-focus:text-[#bfa16a] transition-colors duration-200 text-center">
@@ -836,16 +913,19 @@ useEffect(() => {
 					{products.map((product) => (
 						<motion.div
 							key={product.name}
-							whileHover={{ scale: 1.08, rotate: 2 }}
-							className="flex flex-col items-center w-full"
+							whileHover={{ y: -8 }}
+							transition={{ type: "spring", stiffness: 400, damping: 25 }}
+							className="flex flex-col items-center w-full bg-white p-6 rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300"
 						>
-							<Image
-								src={product.images[0]}
-								alt={product.name}
-								width={320}
-								height={320}
-								className="mb-4 object-cover rounded-xl"
-							/>
+							<div className="relative w-full aspect-square mb-4 overflow-hidden rounded-xl">
+								<Image
+									src={product.images[0]}
+									alt={product.name}
+									fill
+									className="object-cover transition-transform duration-700 hover:scale-105"
+									sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+								/>
+							</div>
 							<div className="text-xl font-medium mb-2">
 								{product.name.includes('Eau De Parfum') ? (
 									<>
@@ -883,18 +963,25 @@ useEffect(() => {
 							isOpen={modalIsOpen}
 							onRequestClose={() => closeModal()}
 							className="bg-transparent outline-none flex items-center justify-center min-h-screen"
-							overlayClassName="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+							overlayClassName="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50"
 							ariaHideApp={false}
 							shouldCloseOnOverlayClick={true}
 						>
+							{/* Fixed close for small screens (ensures visible even if dialog content scrolls) */}
+							<button
+								onClick={() => closeModal()}
+								className="fixed top-4 right-4 z-60 md:hidden bg-white/90 text-gray-700 hover:text-[#bfa16a] rounded-full p-2 shadow-lg"
+								aria-label="Tutup"
+							>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+							</button>
 							<m.div
 								initial={{ opacity: 0, scale: 0.85, y: 60 }}
 								animate={{ opacity: 1, scale: 1, y: 0 }}
 								exit={{ opacity: 0, scale: 0.85, y: 60 }}
 								transition={{ duration: 0.35, type: "spring" }}
-								className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 max-w-xs sm:max-w-md w-full flex flex-col items-center relative"
+								className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 sm:p-8 max-w-xs sm:max-w-md w-full flex flex-col items-center relative border border-white/20"
 							>
-								{/* Close button */}
 								<button
 									onClick={() => closeModal()}
 									className="absolute top-4 right-4 text-gray-400 hover:text-[#bfa16a] text-xl font-bold"
@@ -902,11 +989,9 @@ useEffect(() => {
 								>
 									×
 								</button>
-								{/* Product image carousel */}
 								<div className="w-full flex flex-col items-center mb-4">
-																	<div className="relative w-full max-w-xs sm:max-w-[340px] aspect-square mb-2 mx-auto">
+																	<div className="relative w-full max-w-[340px] aspect-square mb-2 mx-auto">
 																		<div className="relative w-full h-full flex flex-row items-center justify-center">
-																			{/* Zoom controls */}
 							                                                                    <div className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2">
 							                                                                 					<button
 							                                                                 						className="bg-white/80 rounded-full p-2 shadow hover:bg-[#bfa16a] hover:text-white transition flex items-center justify-center mb-1"
@@ -1217,8 +1302,8 @@ useEffect(() => {
 	  {/* Highlight */}
 	  <rect x="60" y="80" width="8" height="40" rx="2" fill="#fff8f0" opacity="0.18" />
 		</motion.svg>
-		<div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6 sm:gap-8 px-4 text-left">
-		  <div className="flex flex-col items-start gap-4 w-full md:w-auto">
+						<div className="max-w-6xl mx-auto flex flex-col md:flex-row md:flex-nowrap justify-between items-start md:items-start gap-4 sm:gap-6 px-4 text-left">
+							<div className="flex flex-col items-start gap-4 w-full md:w-1/3">
 						<span className="text-2xl font-bold tracking-wide">Good Place</span>
 						<span className="text-sm text-gray-400">Seni Keharuman Mewah & Modern</span>
 						<div className="flex gap-4 mt-2">
@@ -1257,7 +1342,7 @@ useEffect(() => {
 							</motion.a>
 						</div>
 						{/* Scroll to top button */}
-						{showScroll && (
+						{/* {showScroll && (
 							<motion.button
 								initial={{ opacity: 0, y: 40 }}
 								animate={{ opacity: 1, y: 0 }}
@@ -1273,22 +1358,51 @@ useEffect(() => {
 								</span>
 								<svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
 							</motion.button>
-						)}
-						{/* Floating WhatsApp chat button */}
-						<motion.a
-							href="https://wa.me/6288801858508"
-							target="_blank"
-							rel="noopener"
-							className="fixed bottom-4 left-4 sm:bottom-8 sm:left-8 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition flex items-center"
-							aria-label="Chat WhatsApp"
-							animate={{ y: [0, -10, 0] }}
-							transition={{ duration: 2, repeat: Infinity }}
-							whileHover={{ scale: 1.1 }}
-							whileTap={{ scale: 0.95 }}
-						>
-							<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.198.297-.767.967-.94 1.166-.173.198-.347.223-.644.075-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.447-.52.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.521-.075-.149-.669-1.611-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.372-.01-.571-.01-.198 0-.52.075-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.075.149.198 2.099 3.205 5.077 4.487.711.306 1.263.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.075-.124-.272-.198-.57-.347z"/></svg>
-							<span className="ml-2 hidden md:inline font-semibold">Chat</span>
-						</motion.a>
+						)} */}
+						{/* Social Media Links */}
+						<div className="flex gap-4 mt-2">
+							{/* Floating WhatsApp chat button */}
+							<AnimatePresence mode="wait">
+								{!hidden && !isNearFooter && (
+									<motion.a
+										href="https://wa.me/6288801858508"
+										target="_blank"
+										rel="noopener"
+										className="fixed bottom-4 left-4 sm:bottom-8 sm:left-8 z-50 bg-green-600 text-white p-3 rounded-full shadow-lg hover:bg-green-700 transition flex items-center gap-2 group"
+										aria-label="Chat WhatsApp"
+										initial={{ opacity: 0, y: 20 }}
+										animate={{ 
+											opacity: 1,
+											y: [-4, 4, -4],
+										}}
+										exit={{ opacity: 0, y: 20 }}
+										transition={{
+											y: {
+												duration: 2.5,
+												repeat: Infinity,
+												ease: "easeInOut"
+											},
+											opacity: { duration: 0.2 }
+										}}
+										whileHover={{ scale: 1.05, y: 0 }}
+										whileTap={{ scale: 0.95 }}
+									>
+										<svg
+											viewBox="0 0 24 24"
+											width="24"
+											height="24"
+											className="transition-transform duration-300 group-hover:rotate-12"
+										>
+											<path
+												fill="currentColor"
+												d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"
+											/>
+										</svg>
+										<span className="text-sm font-medium hidden sm:block">WhatsApp</span>
+									</motion.a>
+								)}
+							</AnimatePresence>
+						</div>
 						{/* Ripple effect for scroll to top button */}
 						<style jsx global>{`
 	.ripple {
@@ -1301,7 +1415,7 @@ useEffect(() => {
   `}</style>
 					</div>
 		  {/* Accordion Kontak */}
-		  <div className="flex flex-col gap-2 items-start w-full md:w-auto mt-6 md:mt-0">
+		  <div className="flex flex-col gap-2 items-start w-full md:w-1/6 mt-6 md:mt-0">
 			<button
 			  className="flex items-center justify-between w-full md:w-auto font-semibold mb-2 focus:outline-none"
 			  onClick={() => toggleAccordion('kontak')}
@@ -1313,7 +1427,7 @@ useEffect(() => {
 			</button>
 			<div
 			  id="footer-kontak"
-			  className={`flex flex-col gap-2 pl-2 transition-all duration-300 overflow-hidden
+			  className={`flex flex-col gap-3 transition-all duration-300 overflow-hidden
 				${footerAccordion.kontak ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}
 				md:max-h-none md:opacity-100 md:pl-0
 				${footerAccordion.kontak ? 'pointer-events-auto' : 'pointer-events-none'}
@@ -1325,8 +1439,34 @@ useEffect(() => {
 			  <span className="text-sm text-gray-400">Alamat: Bandung, Indonesia</span>
 			</div>
 		  </div>
+					{/* Marketplace accordion (mobile) */}
+					<div className="flex flex-col gap-2 items-start w-full md:w-1/6 mt-6 md:mt-0">
+						<button
+							className="flex items-center justify-between w-full md:w-auto font-semibold mb-2 focus:outline-none"
+							onClick={() => toggleAccordion('marketplace')}
+							aria-expanded={footerAccordion.marketplace}
+							aria-controls="footer-marketplace"
+						>
+							Marketplace
+							<svg className={`ml-2 transition-transform duration-200 ${footerAccordion.marketplace ? 'rotate-90' : ''}`} width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6l4 4 4-4"/></svg>
+						</button>
+						<div
+							id="footer-marketplace"
+							className={`flex flex-col gap-2 pl-2 transition-all duration-300 overflow-hidden
+								${footerAccordion.marketplace ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}
+								md:max-h-none md:opacity-100 md:pl-0
+								${footerAccordion.marketplace ? 'pointer-events-auto' : 'pointer-events-none'}
+								md:pointer-events-auto
+							`}
+						>
+							<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Shopee</a>
+							<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Tokopedia</a>
+							<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Lazada</a>
+							<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Tik Tok Shop</a>
+						</div>
+					</div>
 		  {/* Accordion Tautan Cepat */}
-		  <div className="flex flex-col gap-2 items-start w-full md:w-auto mt-6 md:mt-0">
+		  <div className="flex flex-col gap-2 items-start w-full md:w-1/6 mt-6 md:mt-0">
 			<button
 			  className="flex items-center justify-between w-full md:w-auto font-semibold mb-2 focus:outline-none"
 			  onClick={() => toggleAccordion('tautan')}
@@ -1345,15 +1485,26 @@ useEffect(() => {
 				md:pointer-events-auto
 			  `}
 			>
-			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Koleksi</a>
-			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Tentang Kami</a>
-			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Majalah</a>
-			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Kontak</a>
+			  <a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Instagram</a>
+					<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Twitter</a>
+					<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Tiktok</a>
+					<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Youtube</a>
+					<a href="#" className="text-sm text-gray-400 hover:text-[#bfa16a]">Linkedln</a>
 			</div>
+			{/* Marketplace */}
+
+				
 		  </div>
 				</div>
 				<div className="border-t border-gray-700 mt-8 pt-4 text-center text-xs text-white">© 2025 Good Place. All rights reserved.</div>
 			</footer>
-		</div>
+			</div>
+			{!hidden && (
+			  <>
+				<ScrollToTop />
+				<ChatBot />
+			  </>
+			)}
+		</React.Fragment>
 	);
 }
